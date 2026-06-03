@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1775304139024,
+      "tag": "0000_tan_morg",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1775304515950,
+      "tag": "0001_shallow_timeslip",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1777697898808,
+      "tag": "0002_powerful_celestials",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1778046503221,
+      "tag": "0003_fearless_mojo",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1778047123954,
+      "tag": "0004_hard_karma",
+      "breakpoints": true
+    }
+  ]
+}

@@ -1,10 +1,5 @@
 {
   "buildCommand": "pnpm install && pnpm build",
-  "outputDirectory": "dist",
-  "framework": "vite",
-  "functions": {
-    "dist/index.js": {
-      "runtime": "nodejs22.x"
-    }
-  }
+  "outputDirectory": "dist/public",
+  "framework": "vite"
 }

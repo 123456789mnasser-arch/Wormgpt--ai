@@ -1,6 +1,3 @@
-import { useState } from "react";
-import { trpc } from "@/lib/trpc";
-import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -14,115 +11,51 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Plus, Trash2, Edit2, Loader2 } from "lucide-react";
-
-interface Conversation {
-  id: number;
-  userId: number;
-  title: string;
-  description: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { useState } from "react";
+import { useConversations } from "@/hooks/useConversations";
 
 interface ConversationListProps {
-  onSelectConversation: (id: number) => void;
-  selectedId?: number;
+  onSelectConversation: (id: string) => void;
+  selectedId?: string;
 }
 
 export default function ConversationList({
   onSelectConversation,
   selectedId,
 }: ConversationListProps) {
-  const { user } = useAuth();
   const [newTitle, setNewTitle] = useState("");
   const [isCreating, setIsCreating] = useState(false);
-
-  const getConversations = trpc.chat.getConversations.useQuery();
-  const createConversationMutation = trpc.chat.createConversation.useMutation();
-  const deleteConversationMutation = trpc.chat.deleteConversation.useMutation();
-  const deleteAllConversationsMutation = trpc.chat.deleteAllConversations.useMutation();
+  const { conversations, createConversation, deleteConversation } = useConversations();
 
   const handleCreateConversation = async () => {
     if (!newTitle.trim()) return;
 
     setIsCreating(true);
     try {
-      const result = await createConversationMutation.mutateAsync({
-        title: newTitle,
-      });
+      const newConv = createConversation(newTitle);
+      onSelectConversation(newConv.id);
       setNewTitle("");
-      // Refetch conversations
-      getConversations.refetch();
-      // Select the new conversation
-      if (result[0]?.insertId) {
-        onSelectConversation(result[0].insertId);
-      }
-    } catch (error) {
-      console.error("Error creating conversation:", error);
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleDeleteConversation = async (id: number) => {
-    try {
-      await deleteConversationMutation.mutateAsync({ conversationId: id });
-      getConversations.refetch();
-    } catch (error) {
-      console.error("Error deleting conversation:", error);
+  const handleDeleteConversation = (id: string) => {
+    deleteConversation(id);
+    if (selectedId === id) {
+      onSelectConversation(conversations[0]?.id || "");
     }
   };
 
-  const conversations = (getConversations.data || []) as Conversation[];
+  const handleDeleteAll = () => {
+    conversations.forEach(conv => deleteConversation(conv.id));
+    setNewTitle("");
+  };
 
   return (
-    <div className="w-full h-full flex flex-col bg-[#1a1f3a] border-r border-[#2d3142]">
-      {/* Header */}
-      <div className="p-4 border-b border-[#2d3142]">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold neon-text-green">المحادثات</h2>
-          {conversations.length > 0 && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
-                  title="حذف جميع المحادثات"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="bg-[#1a1f3a] border-[#2d3142]">
-                <AlertDialogTitle className="text-[#FF0000]">حذف جميع المحادثات</AlertDialogTitle>
-                <AlertDialogDescription className="text-gray-400">
-                  هل أنت متأكد من حذف جميع المحادثات؟ هذا الإجراء لا يمكن التراجع عنه ولن تتمكن من استرجاع أي بيانات!
-                </AlertDialogDescription>
-                <div className="flex gap-2 justify-end">
-                  <AlertDialogCancel className="bg-[#2d3142] text-gray-400 hover:bg-[#3d4252]">
-                    إلغاء
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    className="bg-red-600 hover:bg-red-700"
-                    onClick={async () => {
-                      try {
-                        await deleteAllConversationsMutation.mutateAsync();
-                        getConversations.refetch();
-                      } catch (error) {
-                        console.error("Error deleting all conversations:", error);
-                      }
-                    }}
-                  >
-                    حذف الجميع
-                  </AlertDialogAction>
-                </div>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-        </div>
-
-
-        {/* Create New Conversation */}
+    <div className="flex flex-col h-full bg-gradient-to-b from-[#0a0e27] to-[#1a1f3a]">
+      {/* Create New Conversation */}
+      <div className="p-4 border-b border-[#FF0000] border-opacity-20">
         <div className="flex gap-2">
           <Input
             value={newTitle}
@@ -132,108 +65,94 @@ export default function ConversationList({
                 handleCreateConversation();
               }
             }}
-            placeholder="عنوان المحادثة..."
-            className="input-neon text-sm"
+            placeholder="عنوان جديد..."
+            className="bg-[#1a1f3a] border-[#FF0000] border-opacity-30 text-white placeholder-[#666]"
             disabled={isCreating}
           />
           <Button
             onClick={handleCreateConversation}
-            disabled={isCreating || !newTitle.trim()}
-            className="btn-neon px-3"
-            size="sm"
+            disabled={!newTitle.trim() || isCreating}
+            className="bg-[#FF0000] hover:bg-[#CC0000] text-white"
           >
-            {isCreating ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Plus className="w-4 h-4" />
-            )}
+            {isCreating ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
           </Button>
         </div>
       </div>
 
       {/* Conversations List */}
-      <div className="flex-1 overflow-y-auto">
-        {getConversations.isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="w-6 h-6 animate-spin neon-text-cyan" />
-          </div>
-        ) : conversations.length === 0 ? (
-          <div className="p-4 text-center text-gray-400">
-            <p>لا توجد محادثات بعد</p>
-            <p className="text-sm mt-2">ابدأ محادثة جديدة الآن</p>
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        {conversations.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-[#FF3333] text-sm">لا توجد محادثات</p>
+            <p className="text-[#666] text-xs mt-1">ابدأ محادثة جديدة من الأعلى</p>
           </div>
         ) : (
-          <div className="space-y-2 p-2">
-            {conversations.map((conversation) => (
-              <Card
-                key={conversation.id}
-                className={`p-3 cursor-pointer transition-all duration-300 ${
-                  selectedId === conversation.id
-                    ? "neon-border bg-[#0a0e27]"
-                    : "cyber-card hover:border-[#00FF41]"
-                }`}
-                onClick={() => onSelectConversation(conversation.id)}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm text-[#00FF41] truncate">
-                      {conversation.title}
-                    </h3>
-                    {conversation.description && (
-                      <p className="text-xs text-gray-400 truncate mt-1">
-                        {conversation.description}
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-500 mt-1">
-                      {new Date(conversation.updatedAt).toLocaleDateString(
-                        "ar-SA"
-                      )}
-                    </p>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-1">
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="bg-[#1a1f3a] border-[#2d3142]">
-                        <AlertDialogTitle className="text-[#00FF41]">
-                          حذف المحادثة
-                        </AlertDialogTitle>
-                        <AlertDialogDescription className="text-gray-400">
-                          هل أنت متأكد من حذف هذه المحادثة؟ لا يمكن التراجع عن
-                          هذا الإجراء.
-                        </AlertDialogDescription>
-                        <div className="flex gap-2 justify-end">
-                          <AlertDialogCancel className="bg-[#2d3142] text-gray-400 hover:bg-[#3d4252]">
-                            إلغاء
-                          </AlertDialogCancel>
-                          <AlertDialogAction
-                            className="bg-red-600 hover:bg-red-700"
-                            onClick={() =>
-                              handleDeleteConversation(conversation.id)
-                            }
-                          >
-                            حذف
-                          </AlertDialogAction>
-                        </div>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
+          conversations.map((conversation) => (
+            <Card
+              key={conversation.id}
+              className={`p-3 cursor-pointer transition-all ${
+                selectedId === conversation.id
+                  ? "bg-[#FF0000] bg-opacity-20 border-[#FF0000]"
+                  : "bg-[#1a1f3a] border-[#FF0000] border-opacity-10 hover:border-opacity-30"
+              }`}
+              onClick={() => onSelectConversation(conversation.id)}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-semibold truncate text-sm">
+                    {conversation.title}
+                  </p>
+                  <p className="text-[#999] text-xs mt-1">
+                    {conversation.messages.length} رسائل
+                  </p>
                 </div>
-              </Card>
-            ))}
-          </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteConversation(conversation.id);
+                  }}
+                  className="flex-shrink-0 p-1 hover:bg-[#FF0000] hover:bg-opacity-20 rounded text-[#FF3333]"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </Card>
+          ))
         )}
       </div>
+
+      {/* Delete All Button */}
+      {conversations.length > 0 && (
+        <div className="p-4 border-t border-[#FF0000] border-opacity-20">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="destructive"
+                className="w-full bg-[#CC0000] hover:bg-[#990000] text-white"
+              >
+                حذف الكل
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-[#1a1f3a] border-[#FF0000]">
+              <AlertDialogTitle className="text-[#FF3333]">حذف جميع المحادثات</AlertDialogTitle>
+              <AlertDialogDescription className="text-[#999]">
+                هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.
+              </AlertDialogDescription>
+              <div className="flex gap-2 justify-end">
+                <AlertDialogCancel className="bg-[#333] text-white hover:bg-[#444]">
+                  إلغاء
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteAll}
+                  className="bg-[#FF0000] hover:bg-[#CC0000] text-white"
+                >
+                  حذف
+                </AlertDialogAction>
+              </div>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
     </div>
   );
 }

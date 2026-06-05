@@ -9,13 +9,20 @@ export function useAIChat() {
     setError(null);
 
     try {
+      const apiUrl = import.meta.env.VITE_FRONTEND_FORGE_API_URL;
+      const apiKey = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
+
+      if (!apiUrl || !apiKey) {
+        throw new Error('API configuration missing');
+      }
+
       const response = await fetch(
-        `${import.meta.env.VITE_FRONTEND_FORGE_API_URL}/llm/invoke`,
+        `${apiUrl}/llm/invoke`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${import.meta.env.VITE_FRONTEND_FORGE_API_KEY}`,
+            'Authorization': `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
             messages: messages.map(m => ({
@@ -30,14 +37,20 @@ export function useAIChat() {
       );
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
+        const errorData = await response.text();
+        throw new Error(`API error ${response.status}: ${errorData}`);
       }
 
       const data = await response.json();
-      return data.choices?.[0]?.message?.content || '';
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) {
+        throw new Error('No response from API');
+      }
+      return content;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       setError(message);
+      console.error('AI Chat Error:', message);
       throw err;
     } finally {
       setLoading(false);

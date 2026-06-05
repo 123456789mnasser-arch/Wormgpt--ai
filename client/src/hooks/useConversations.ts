@@ -25,6 +25,23 @@ export function useConversations() {
       } catch (e) {
         console.error('Failed to parse conversations:', e);
       }
+    } else {
+      // Create first conversation with welcome message
+      const firstConversation: Conversation = {
+        id: Date.now().toString(),
+        title: 'محادثة جديدة',
+        messages: [
+          {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: '[WELCOME_CARD]',
+            timestamp: Date.now(),
+          },
+        ],
+        createdAt: Date.now(),
+      };
+      setConversations([firstConversation]);
+      localStorage.setItem('wormgpt_conversations', JSON.stringify([firstConversation]));
     }
     setLoading(false);
   }, []);

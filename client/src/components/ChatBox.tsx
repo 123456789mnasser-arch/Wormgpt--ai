@@ -43,23 +43,11 @@ const ChatBoxComponent = memo(function ChatBox({ conversationId, onFirstMessage 
   useEffect(() => {
     const conversation = conversations.find(c => c.id === conversationId);
     if (conversation) {
-      if (conversation.messages.length === 0) {
-        // Add welcome message if no messages exist
-        const welcomeMessage: Message = {
-          id: Date.now().toString(),
-          role: "assistant",
-          content: "[WELCOME_CARD]",
-          timestamp: Date.now(),
-        };
-        setMessages([welcomeMessage]);
-      } else {
-        setMessages(conversation.messages as Message[]);
-      }
+      setMessages(conversation.messages as Message[]);
     }
   }, [conversationId, conversations]);
 
-
-  // Scroll to bottom when new messages arrive
+  // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
   }, [messages]);

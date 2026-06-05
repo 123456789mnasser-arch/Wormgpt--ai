@@ -198,10 +198,9 @@ const ChatBoxComponent = memo(function ChatBox({ conversationId, onFirstMessage 
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-[#FF0000] border-opacity-20 p-4 bg-[#0a0e27] bg-opacity-80">
-        <FileUpload onFilesSelected={setAttachedFiles} />
-
-        <div className="flex gap-2 mt-3">
+      <div className="border-t border-[#FF0000] border-opacity-20 p-4 bg-[#0a0e27] bg-opacity-80 space-y-3">
+        {/* Input Row */}
+        <div className="flex gap-2">
           <Input
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
@@ -219,8 +218,12 @@ const ChatBoxComponent = memo(function ChatBox({ conversationId, onFirstMessage 
           </Button>
         </div>
 
+        {/* File Upload Buttons */}
+        <FileUpload onFilesSelected={setAttachedFiles} />
+
+        {/* Attached Files */}
         {attachedFiles.length > 0 && (
-          <div className="mt-3 space-y-2">
+          <div className="space-y-2">
             {attachedFiles.map((file, idx) => (
               <div
                 key={idx}

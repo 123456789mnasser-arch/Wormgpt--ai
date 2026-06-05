@@ -1,22 +1,19 @@
-import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Upload, X, File, Image, Code, Mic, Link, Loader2 } from "lucide-react";
-import { trpc } from "@/lib/trpc";
+import { Upload, X, Image, Mic, Loader2, Square } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 
 interface FileUploadProps {
-  onFileSelect: (file: { name: string; type: string; url: string; size: number }) => void;
-  conversationId: number;
+  onFilesSelected: (files: Array<{ name: string; type: string; url: string; size: number }>) => void;
 }
 
-export default function FileUpload({ onFileSelect, conversationId }: FileUploadProps) {
+export default function FileUpload({ onFilesSelected }: FileUploadProps) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const uploadFileMutation = trpc.files.uploadFile.useMutation();
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -26,30 +23,27 @@ export default function FileUpload({ onFileSelect, conversationId }: FileUploadP
     setUploadProgress(0);
 
     try {
+      // Simulate upload progress
       const interval = setInterval(() => {
         setUploadProgress((prev) => Math.min(prev + 10, 90));
       }, 100);
 
+      // Create object URL for local file
       const fileUrl = URL.createObjectURL(file);
-
-      await uploadFileMutation.mutateAsync({
-        filename: file.name,
-        fileType: getFileType(file.type),
-        fileUrl,
-        fileKey: `${conversationId}/${file.name}`,
-        fileSize: file.size,
-        mimeType: file.type,
-      });
 
       clearInterval(interval);
       setUploadProgress(100);
 
-      onFileSelect({
+      const fileType = file.type.startsWith("image/") ? "image" : 
+                       file.type.startsWith("audio/") ? "audio" :
+                       file.type === "application/pdf" ? "pdf" : "file";
+
+      onFilesSelected([{
         name: file.name,
-        type: getFileType(file.type),
+        type: fileType,
         url: fileUrl,
         size: file.size,
-      });
+      }]);
 
       setTimeout(() => {
         setUploadProgress(0);
@@ -79,97 +73,116 @@ export default function FileUpload({ onFileSelect, conversationId }: FileUploadP
         audioChunksRef.current.push(event.data);
       };
 
-      mediaRecorder.onstop = async () => {
-        try {
-          const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
-          const audioUrl = URL.createObjectURL(audioBlob);
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const timestamp = new Date().toLocaleTimeString("ar-SA");
 
-          await uploadFileMutation.mutateAsync({
-            filename: `audio-${Date.now()}.wav`,
-            fileType: "audio",
-            fileUrl: audioUrl,
-            fileKey: `${conversationId}/audio-${Date.now()}.wav`,
-            fileSize: audioBlob.size,
-            mimeType: "audio/wav",
-          });
+        onFilesSelected([{
+          name: `تسجيل_صوتي_${timestamp}.webm`,
+          type: "audio",
+          url: audioUrl,
+          size: audioBlob.size,
+        }]);
 
-          onFileSelect({
-            name: `audio-${Date.now()}.wav`,
-            type: "audio",
-            url: audioUrl,
-            size: audioBlob.size,
-          });
-
-          stream.getTracks().forEach((track) => track.stop());
-        } catch (e) {
-          console.error("Error processing audio:", e);
-        }
+        // Stop all tracks
+        stream.getTracks().forEach((track) => track.stop());
       };
 
       mediaRecorder.start();
       setIsRecording(true);
-    } catch (error: any) {
-      console.error("Error accessing microphone:", error);
-      if (error.name === "NotAllowedError") {
-        alert("يرجى السماح بالوصول إلى الميكروفون");
-      } else if (error.name === "NotFoundError") {
-        alert("لم يتم العثور على ميكروفون");
-      }
+    } catch (error) {
+      console.error("Error starting recording:", error);
+      alert("خطأ في الوصول إلى الميكروفون");
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current) {
+    if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
   };
 
-  const getFileType = (mimeType: string): string => {
-    if (mimeType.startsWith("image")) return "image";
-    if (mimeType.startsWith("audio")) return "audio";
-    if (mimeType.includes("code") || mimeType.includes("text")) return "code";
-    if (mimeType.includes("pdf") || mimeType.includes("document")) return "document";
-    return "file";
-  };
-
   return (
-    <div className="flex gap-2 items-center">
+    <div className="space-y-3">
+      {/* File Upload Progress */}
+      {isUploading && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs text-[#FF3333]">
+            <span>جاري الرفع...</span>
+            <span>{uploadProgress}%</span>
+          </div>
+          <Progress value={uploadProgress} className="h-1 bg-[#1a1f3a]" />
+        </div>
+      )}
+
+      {/* Buttons Row */}
+      <div className="flex gap-2">
+        {/* Image Upload Button */}
+        <Button
+          onClick={() => {
+            const input = fileInputRef.current;
+            if (input) {
+              input.accept = "image/*";
+              input.click();
+            }
+          }}
+          disabled={isUploading || isRecording}
+          className="flex-1 bg-[#1a1f3a] hover:bg-[#FF0000] hover:bg-opacity-20 border border-[#FF0000] border-opacity-30 text-[#FF3333] text-sm"
+        >
+          <Image size={16} className="mr-2" />
+          صورة
+        </Button>
+
+        {/* Audio Recording Button */}
+        <Button
+          onClick={isRecording ? stopRecording : startRecording}
+          disabled={isUploading}
+          className={`flex-1 text-sm ${
+            isRecording
+              ? "bg-[#FF0000] hover:bg-[#CC0000] text-white"
+              : "bg-[#1a1f3a] hover:bg-[#FF0000] hover:bg-opacity-20 border border-[#FF0000] border-opacity-30 text-[#FF3333]"
+          }`}
+        >
+          {isRecording ? (
+            <>
+              <Square size={16} className="mr-2" />
+              إيقاف
+            </>
+          ) : (
+            <>
+              <Mic size={16} className="mr-2" />
+              تسجيل
+            </>
+          )}
+        </Button>
+
+        {/* File Upload Button */}
+        <Button
+          onClick={() => {
+            const input = fileInputRef.current;
+            if (input) {
+              input.accept = "*";
+              input.click();
+            }
+          }}
+          disabled={isUploading || isRecording}
+          className="flex-1 bg-[#1a1f3a] hover:bg-[#FF0000] hover:bg-opacity-20 border border-[#FF0000] border-opacity-30 text-[#FF3333] text-sm"
+        >
+          <Upload size={16} className="mr-2" />
+          ملف
+        </Button>
+      </div>
+
+      {/* Hidden File Input */}
       <input
         ref={fileInputRef}
         type="file"
         onChange={handleFileSelect}
         className="hidden"
-        accept="image/*,.py,.js,.ts,.java,.cpp,.c,.rb,.go,.rs,.php,.html,.css,.json,.xml,.pdf,.doc,.docx"
-      />
-
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => fileInputRef.current?.click()}
         disabled={isUploading || isRecording}
-        className="border-[#FF0000] text-[#FF0000] hover:bg-[#FF0000] hover:text-white"
-        title="رفع ملف"
-      >
-        {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-      </Button>
-
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={isRecording ? stopRecording : startRecording}
-        className={`border-[#00FF41] text-[#00FF41] hover:bg-[#00FF41] hover:text-black ${isRecording ? "bg-[#00FF41]" : ""}`}
-        title={isRecording ? "إيقاف" : "تسجيل"}
-      >
-        <Mic className={`w-4 h-4 ${isRecording ? "animate-pulse" : ""}`} />
-      </Button>
-
-      {isUploading && (
-        <div className="flex-1 min-w-[200px]">
-          <Progress value={uploadProgress} className="h-1" />
-          <p className="text-xs text-gray-400 mt-1">{uploadProgress}%</p>
-        </div>
-      )}
+      />
     </div>
   );
 }

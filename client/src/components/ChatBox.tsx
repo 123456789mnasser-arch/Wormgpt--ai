@@ -7,7 +7,8 @@ import { Streamdown } from "streamdown";
 import { memo, useRef, useEffect, useState } from "react";
 import VirtualMessageList from "@/components/VirtualMessageList";
 import { useAIChat } from "@/hooks/useAIChat";
-import { useMockAI } from "@/hooks/useMockAI";
+import { useAdvancedAI } from '../hooks/useAdvancedAI';
+import { useMockAI } from '../hooks/useMockAI';
 import { useConversations } from "@/hooks/useConversations";
 
 interface Message {
@@ -35,7 +36,8 @@ const ChatBoxComponent = memo(function ChatBox({ conversationId, onFirstMessage 
   
   // Use real API if available, otherwise use mock
   const hasApiKey = !!import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
-  const aiChat = hasApiKey ? useAIChat() : useMockAI();
+  const advancedAI = useAdvancedAI();
+  const aiChat = hasApiKey ? advancedAI : useMockAI();
   const { sendMessage } = aiChat;
   const { conversations, addMessage } = useConversations();
 

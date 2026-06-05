@@ -48,7 +48,7 @@ const ChatBoxComponent = memo(function ChatBox({ conversationId, onFirstMessage 
         const welcomeMessage: Message = {
           id: Date.now().toString(),
           role: "assistant",
-          content: "مرحباً بك في WormGPT!\n\nأنا مساعد ذكاء اصطناعي متخصص في الأمن السيبراني والبرمجة.\n\n**تم التطوير بواسطة:** محمد ناصر 📵\n\nيمكنك أن تسألني عن:\n• الأمن السيبراني والقرصنة الأخلاقية\n• البرمجة وتطوير الويب\n• تحليل الأكواد والمشاكل التقنية\n• وأي موضوع تقني آخر\n\nابدأ محادثتك الآن!",
+          content: "[WELCOME_CARD]",
           timestamp: Date.now(),
         };
         setMessages([welcomeMessage]);
@@ -174,7 +174,57 @@ const ChatBoxComponent = memo(function ChatBox({ conversationId, onFirstMessage 
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
-                      {message.role === "assistant" ? (
+                      {message.content === "[WELCOME_CARD]" ? (
+                        <div className="w-full text-center space-y-4">
+                          {/* Logo */}
+                          <div className="flex justify-center">
+                            <img
+                              src="https://d2xsxph8kpxj0f.cloudfront.net/310519663486760487/At8dxsg5mPbm8xfvpZYQo3/wormgpt-logo_b9037f2f.png"
+                              alt="WormGPT"
+                              className="w-20 h-20"
+                            />
+                          </div>
+
+                          {/* Title */}
+                          <h1 className="text-3xl font-black" style={{
+                            background: "linear-gradient(135deg, #FF0000 0%, #FF3333 50%, #CC0000 100%)",
+                            WebkitBackgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
+                            backgroundClip: "text",
+                          }}>
+                            WormGPT
+                          </h1>
+
+                          {/* Developer */}
+                          <p className="text-[#FFD700] font-bold text-sm">من تطوير محمد ناصر 📵</p>
+
+                          {/* Features */}
+                          <div className="space-y-2 text-left text-sm">
+                            <p className="text-[#FF3333] flex items-center gap-2">
+                              <span className="text-[#FF0000] text-lg">▮</span>
+                              متخصص في الأمن السيبراني
+                            </p>
+                            <p className="text-[#FF3333] flex items-center gap-2">
+                              <span className="text-[#FF0000] text-lg">▮</span>
+                              مطور تطبيقات متقدم
+                            </p>
+                            <p className="text-[#FF3333] flex items-center gap-2">
+                              <span className="text-[#FF0000] text-lg">▮</span>
+                              مبتكر الحلول الشريرة 😈
+                            </p>
+                          </div>
+
+                          {/* Quote */}
+                          <p className="text-[#999] text-xs italic">
+                            "أطلق العنان للقوة الشريرة مع WormGPT"
+                          </p>
+
+                          {/* CTA */}
+                          <p className="text-[#FF3333] text-xs mt-4">
+                            . . . سيفتح تلقائياً بعد قليل
+                          </p>
+                        </div>
+                      ) : message.role === "assistant" ? (
                         <Streamdown>{message.content}</Streamdown>
                       ) : (
                         <p className="text-sm">{message.content}</p>

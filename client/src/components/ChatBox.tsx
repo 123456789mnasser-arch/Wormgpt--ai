@@ -219,6 +219,17 @@ const ChatBoxComponent = memo(function ChatBox({ conversationId, onFirstMessage 
                             "أطلق العنان للقوة الشريرة مع WormGPT"
                           </p>
 
+                          {/* Enter Button */}
+                          <button
+                            onClick={() => {
+                              // Clear welcome message and start fresh
+                              setMessages([]);
+                            }}
+                            className="mt-6 px-8 py-3 bg-gradient-to-r from-[#FF0000] to-[#CC0000] text-white font-bold rounded-lg border-2 border-[#FFD700] hover:border-[#FFF] transition-all transform hover:scale-105"
+                          >
+                            🔓 دخول
+                          </button>
+
                           {/* CTA */}
                           <p className="text-[#FF3333] text-xs mt-4">
                             . . . سيفتح تلقائياً بعد قليل

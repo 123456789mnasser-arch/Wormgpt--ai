@@ -38,9 +38,21 @@ const ChatBoxComponent = memo(function ChatBox({ conversationId, onFirstMessage 
   useEffect(() => {
     const conversation = conversations.find(c => c.id === conversationId);
     if (conversation) {
-      setMessages(conversation.messages as Message[]);
+      if (conversation.messages.length === 0) {
+        // Add welcome message if no messages exist
+        const welcomeMessage: Message = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: "مرحباً بك في WormGPT!\n\nأنا مساعد ذكاء اصطناعي متخصص في الأمن السيبراني والبرمجة.\n\n**تم التطوير بواسطة:** محمد ناصر 📵\n\nيمكنك أن تسألني عن:\n• الأمن السيبراني والقرصنة الأخلاقية\n• البرمجة وتطوير الويب\n• تحليل الأكواد والمشاكل التقنية\n• وأي موضوع تقني آخر\n\nابدأ محادثتك الآن!",
+          timestamp: Date.now(),
+        };
+        setMessages([welcomeMessage]);
+      } else {
+        setMessages(conversation.messages as Message[]);
+      }
     }
   }, [conversationId, conversations]);
+
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {

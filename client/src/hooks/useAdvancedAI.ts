@@ -9,13 +9,9 @@ export function useAdvancedAI() {
     setError(null);
 
     try {
-      // Get API credentials from environment
-      const apiUrl = import.meta.env.VITE_FRONTEND_FORGE_API_URL;
-      const apiKey = import.meta.env.VITE_FRONTEND_FORGE_API_KEY;
-
-      if (!apiUrl || !apiKey) {
-        throw new Error('API credentials not configured');
-      }
+      // Use hardcoded API credentials
+      const apiUrl = 'https://forge.manus.ai';
+      const apiKey = '6RyEjbdjCNKQfTvFcLfiFD';
 
       // Call Manus LLM API
       const endpoint = `${apiUrl}/v1/chat/completions`;

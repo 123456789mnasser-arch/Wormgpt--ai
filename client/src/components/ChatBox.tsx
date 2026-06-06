@@ -39,7 +39,7 @@ const ChatBoxComponent = memo(function ChatBox({ conversationId, onFirstMessage 
   const advancedAI = useAdvancedAI();
   const aiChat = hasApiKey ? advancedAI : useMockAI();
   const { sendMessage } = aiChat;
-  const { conversations, addMessage } = useConversations();
+  const { conversations, addMessage, updateConversation } = useConversations();
 
   // Load messages when conversation changes
   useEffect(() => {
@@ -212,8 +212,15 @@ const ChatBoxComponent = memo(function ChatBox({ conversationId, onFirstMessage 
                           {/* Enter Button */}
                           <button
                             onClick={() => {
-                              // Clear welcome message and start fresh
-                              setMessages([]);
+                              // Remove welcome message and start fresh
+                              const conversation = conversations.find(c => c.id === conversationId);
+                              if (conversation) {
+                                const updatedMessages = conversation.messages.filter(
+                                  m => m.content !== '[WELCOME_CARD]'
+                                );
+                                updateConversation(conversationId, { messages: updatedMessages });
+                                setMessages(updatedMessages);
+                              }
                             }}
                             className="mt-6 px-8 py-3 bg-gradient-to-r from-[#FF0000] to-[#CC0000] text-white font-bold rounded-lg border-2 border-[#FFD700] hover:border-[#FFF] transition-all transform hover:scale-105"
                           >

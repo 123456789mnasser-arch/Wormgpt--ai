@@ -13,13 +13,10 @@ export default function Home() {
 
   // Initialize first conversation on load
   useEffect(() => {
-    if (conversations.length === 0) {
-      const newConv = createConversation("محادثة جديدة");
-      setSelectedConversationId(newConv.id);
-    } else if (!selectedConversationId) {
+    if (conversations.length > 0 && !selectedConversationId) {
       setSelectedConversationId(conversations[0].id);
     }
-  }, []);
+  }, [conversations, selectedConversationId]);
 
   const handleCreateNewConversation = () => {
     const newConv = createConversation("محادثة جديدة");

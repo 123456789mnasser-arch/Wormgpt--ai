@@ -227,10 +227,7 @@ const ChatBoxComponent = memo(function ChatBox({ conversationId, onFirstMessage 
                             🔓 دخول
                           </button>
 
-                          {/* CTA */}
-                          <p className="text-[#FF3333] text-xs mt-4">
-                            . . . سيفتح تلقائياً بعد قليل
-                          </p>
+
                         </div>
                       ) : message.role === "assistant" ? (
                         <Streamdown>{message.content}</Streamdown>

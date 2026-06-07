@@ -13,8 +13,8 @@ export function useAdvancedAI() {
       const apiUrl = 'https://forge.manus.ai';
       const apiKey = '6RyEjbdjCNKQfTvFcLfiFD';
 
-      // Call Manus LLM API
-      const endpoint = `${apiUrl}/v1/chat/completions`;
+      // Call Manus LLM API with CORS proxy
+      const endpoint = `https://cors-anywhere.herokuapp.com/${apiUrl}/v1/chat/completions`;
       console.log('Calling API endpoint:', endpoint);
       
       const response = await fetch(endpoint, {
